@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Space Grotesk", sans-serif;
+
+  --color-cyber-black: #050505;
+  --color-cyber-neon: #00f3ff;
+  --color-cyber-pink: #ff00ff;
+  --color-cyber-yellow: #fcee0a;
+  --color-cyber-dark: #151619;
+  
+  --radius-cyber: 0px; /* Cyberpunk likes sharp edges */
+}
+
+@layer base {
+  body {
+    @apply bg-cyber-black text-white font-sans selection:bg-cyber-neon selection:text-black;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold uppercase tracking-tighter;
+  }
+}
+
+@layer components {
+  .cyber-grid {
+    background-image: 
+      linear-gradient(rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .neon-border {
+    @apply border border-cyber-neon shadow-[0_0_10px_rgba(0,243,255,0.3)] hover:shadow-[0_0_20px_rgba(0,243,255,0.5)] transition-shadow duration-300;
+  }
+
+  .neon-text {
+    @apply text-cyber-neon drop-shadow-[0_0_5px_rgba(0,243,255,0.5)];
+  }
+
+  .glass-card {
+    @apply bg-[rgba(21,22,25,0.7)] backdrop-blur-md border border-white/10;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-cyber-black;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-cyber-neon/30 hover:bg-cyber-neon/50 transition-colors;
+}

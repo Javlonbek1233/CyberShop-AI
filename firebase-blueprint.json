@@ -1,0 +1,105 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A high-tech product sold in the CyberShop.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Name of the product" },
+        "description": { "type": "string", "description": "Markdown description of the product" },
+        "price": { "type": "number", "description": "Current price" },
+        "category": { "type": "string", "description": "Product category" },
+        "image": { "type": "string", "description": "URL to the product image" },
+        "stock": { "type": "integer", "description": "Units in stock" },
+        "isFlashSale": { "type": "boolean", "description": "Whether the product is on flash sale" },
+        "discountPrice": { "type": "number", "description": "Discounted price during sale" },
+        "rating": { "type": "number", "description": "User rating" }
+      },
+      "required": ["name", "price", "category", "image"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account details and preferences.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "admin"] },
+        "wishlist": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "List of product IDs"
+        }
+      }
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "An item in the user's shopping cart.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Order": {
+      "title": "Order",
+      "description": "A completed purchase order.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "items": { 
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "name": { "type": "string" },
+              "quantity": { "type": "integer" },
+              "price": { "type": "number" }
+            }
+          }
+        },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "processing", "shipped", "delivered"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "trackingNumber": { "type": "string" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Real-time user notification.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "flash_sale"] },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Public catalog of futuristic products."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user profiles."
+    },
+    "/users/{userId}/cart/{productId}": {
+      "schema": "CartItem",
+      "description": "User-specific shopping car items."
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Purchase records."
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications for status updates and sales."
+    }
+  }
+}

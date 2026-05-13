@@ -1,0 +1,111 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'xasanboyshixnazorov@gmail.com'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity Validations
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'price', 'category', 'image']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             data.price is number && data.price >= 0 &&
+             data.category is string && data.category.size() <= 100 &&
+             data.image is string && data.image.size() <= 1000;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['email', 'displayName']) &&
+             data.email == request.auth.token.email &&
+             data.displayName is string && data.displayName.size() <= 100;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['userId', 'items', 'total', 'status', 'createdAt']) &&
+             data.userId == request.auth.uid &&
+             data.items is list && data.items.size() > 0 &&
+             data.total is number && data.total >= 0 &&
+             data.status in ['pending', 'processing', 'shipped', 'delivered'] &&
+             data.createdAt == request.time;
+    }
+
+    // 1. Products
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidProduct(incoming()) && isValidId(productId);
+      allow update: if isAdmin() && isValidProduct(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasOnly(['name', 'price', 'description', 'stock', 'isFlashSale', 'discountPrice', 'rating', 'image', 'category']);
+      allow delete: if isAdmin();
+    }
+
+    // 2. Users
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin(); // Only admins can list users
+      allow create: if isOwner(userId) && isValidUserProfile(incoming()) && 
+                    incoming().role == 'customer'; // Default role, cannot self-assign admin
+      allow update: if isOwner(userId) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'wishlist']) &&
+                    (incoming().wishlist == null || (incoming().wishlist is list && incoming().wishlist.size() <= 50));
+      
+      // Sub-collection: Cart
+      match /cart/{productId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // 3. Orders
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isEmailVerified() && isValidOrder(incoming()) && isValidId(orderId);
+      allow update: if isAdmin() && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['status', 'trackingNumber']) &&
+                    existing().status != 'delivered'; // Terminal status lock
+    }
+
+    // 4. Notifications
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAdmin(); // Only admins/system can create notifications
+      allow update: if isOwner(existing().userId) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['isRead']);
+      allow delete: if isOwner(existing().userId) || isAdmin();
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "CyberShop AI",
+  "description": "A futuristic, AI-powered e-commerce platform featuring smart recommendations, voice search, and a cyberpunk aesthetic.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["AI product recommendations", "Voice search", "Cyberpunk UI"]
+}
